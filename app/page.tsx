@@ -74,6 +74,7 @@ const Home = () => {
   const [manualPaused, setManualPaused] = useState(false);
   const [levelUpPaused, setLevelUpPaused] = useState(false);
   const paused = manualPaused || levelUpPaused;
+  const [highScore, setHighScore] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [score, setScore] = useState(0);
   const scoreWeight = Math.round(Math.pow(2.5, level - 1));
@@ -426,6 +427,12 @@ const Home = () => {
     });
   };
 
+  useEffect(() => {
+    if (localStorage && localStorage.getItem("highScore")) {
+      setHighScore(Number(localStorage.getItem("highScore")));
+    }
+  }, []);
+
   // 게임 루프
   useEffect(() => {
     const updateInterval = setInterval(() => {
@@ -599,15 +606,7 @@ const Home = () => {
         marginTop: 50,
       }}
     >
-      <p>
-        High Score:{" "}
-        {Math.max(
-          totalScore,
-          localStorage.getItem("highScore")
-            ? Number(localStorage.getItem("highScore"))
-            : 0
-        )}
-      </p>
+      <p>High Score: {Math.max(totalScore, highScore)}</p>
       <div className="w-[400px] flex items-center justify-between">
         <h1 className="text-lg font-bold">Level {level}</h1>
         <p>
