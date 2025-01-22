@@ -47,7 +47,6 @@ const Home = () => {
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [survivalTime, setSurvivalTime] = useState<number>(0);
   const [level, setLevel] = useState(1);
-  const highScore = localStorage.getItem("highScore");
 
   const canvasSize = 400; // 캔버스 크기
   const characterSize = 20; // 캐릭터 크기
@@ -601,7 +600,13 @@ const Home = () => {
       }}
     >
       <p>
-        High Score: {Math.max(totalScore, highScore ? Number(highScore) : 0)}
+        High Score:{" "}
+        {Math.max(
+          totalScore,
+          localStorage.getItem("highScore")
+            ? Number(localStorage.getItem("highScore"))
+            : 0
+        )}
       </p>
       <div className="w-[400px] flex items-center justify-between">
         <h1 className="text-lg font-bold">Level {level}</h1>
