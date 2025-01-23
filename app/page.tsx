@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   canvasSize,
@@ -24,6 +24,7 @@ import { useScore } from "./hooks/useScore";
 import { useItems } from "./hooks/useItems";
 import { useFoods } from "./hooks/useFoods";
 import GameCanvas from "./components/game-canvas";
+import Joystick from "./components/joystick";
 
 const Home = () => {
   const [survivalTime, setSurvivalTime] = useState<number>(0);
@@ -51,7 +52,9 @@ const Home = () => {
     setLife,
     onKeyDown,
     moveCharacter,
+    moveCharacterByJoyStic,
     onDamage,
+    startNextLevel,
   } = useGameLogic(readyToLevelUp, recordHighScore, levelUp);
   const {
     obstacles,
@@ -67,6 +70,7 @@ const Home = () => {
 
   const stopLoop = gameOver || paused || readyToLevelUp;
   const keysPressed = useKeyboard(onKeyDown, () => {});
+  const joyStickRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
   const activateItem = useCallback(
     (item: Item) => {
@@ -110,7 +114,16 @@ const Home = () => {
   // 캐릭터 업데이트
   const updateCharacter = useCallback(() => {
     moveCharacter(keysPressed.current);
-  }, [keysPressed, moveCharacter]);
+    moveCharacterByJoyStic(joyStickRef.current);
+  }, [keysPressed, moveCharacter, moveCharacterByJoyStic]);
+
+  const onJoyStickMove = useCallback(
+    ({ dx, dy }: { dx: number; dy: number }) => {
+      joyStickRef.current.dx = dx;
+      joyStickRef.current.dy = dy;
+    },
+    []
+  );
 
   // 게임 루프
   useEffect(() => {
@@ -180,61 +193,68 @@ const Home = () => {
   return (
     <div
       tabIndex={0}
-      style={{
-        outline: "none",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        marginTop: 50,
-      }}
+      className="mt-6 w-screen flex justify-center flex-col items-center"
     >
-      <p>High Score: {Math.max(totalScore, highScore)}</p>
-      <div className="w-[400px] flex items-center justify-between">
-        <h1 className="text-lg font-bold">Level {level}</h1>
-        <p>
-          {Array.from({ length: life })
-            .map(() => "♥️")
-            .join("")}
-        </p>
-      </div>
-      <div className="w-[400px] flex justify-between text-xs">
-        <p>{score}</p>
-        <p>{levelUpScore}</p>
-      </div>
-      <div className="w-[400px] bg-gray-900 h-2 rounded-full mt-1">
-        <div
-          className="bg-green-500 h-2 rounded-full"
-          style={{ width: `${Math.min(100, (score * 100) / levelUpScore)}%` }}
+      <div className="w-full max-w-[400px]">
+        <p>High Score: {Math.max(totalScore, highScore)}</p>
+        <div className="w-full flex items-center justify-between">
+          <h1 className="text-lg font-bold">Level {level}</h1>
+          <p>
+            {Array.from({ length: life })
+              .map(() => "♥️")
+              .join("")}
+          </p>
+        </div>
+        <div className="w-full flex justify-between text-xs">
+          <p>{score}</p>
+          <p>{levelUpScore}</p>
+        </div>
+        <div className="w-full bg-gray-900 h-2 rounded-full mt-1">
+          <div
+            className="bg-green-500 h-2 rounded-full"
+            style={{ width: `${Math.min(100, (score * 100) / levelUpScore)}%` }}
+          />
+        </div>
+        <GameCanvas
+          render={render}
+          level={level}
+          readyToLevelUp={readyToLevelUp}
+          paused={paused}
+          gameOver={gameOver}
+          totalScore={totalScore}
+          playTime={survivalTime}
+          onClickNextLevel={() => {
+            if (readyToLevelUp) {
+              startNextLevel();
+            }
+          }}
+          onRestart={() => {
+            window.location.reload();
+          }}
         />
-      </div>
-      <GameCanvas
-        render={render}
-        level={level}
-        readyToLevelUp={readyToLevelUp}
-        paused={paused}
-        gameOver={gameOver}
-        totalScore={totalScore}
-        playTime={survivalTime}
-      />
-      <div className="w-[400px] p-2">
-        <h1>Total Score: {totalScore}</h1>
-        <h1>Play Time: {(survivalTime / 100).toFixed(2)} s</h1>
-        <h2>
-          Press <strong className="text-lg text-orange-500">Shift</strong> to
-          move faster
-        </h2>
-        <h2>
-          Press <strong className="text-lg text-orange-500">S</strong> to move
-          slower
-        </h2>
-        <h2>
-          Press <strong className="text-lg text-orange-500">E</strong> to
-          stealth mode (remaining: {remainEscapeCount})
-        </h2>
-        <h2>
-          Press <strong className="text-lg text-orange-500">ESC</strong> to
-          pause
-        </h2>
+        <div className="max-md:hidden w-full p-2">
+          <h1>Total Score: {totalScore}</h1>
+          <h1>Play Time: {(survivalTime / 100).toFixed(2)} s</h1>
+          <h2>
+            Press <strong className="text-lg text-orange-500">Shift</strong> to
+            move faster
+          </h2>
+          <h2>
+            Press <strong className="text-lg text-orange-500">S</strong> to move
+            slower
+          </h2>
+          <h2>
+            Press <strong className="text-lg text-orange-500">E</strong> to
+            stealth mode (remaining: {remainEscapeCount})
+          </h2>
+          <h2>
+            Press <strong className="text-lg text-orange-500">ESC</strong> to
+            pause
+          </h2>
+        </div>
+        <div className="flex md:hidden justify-center mt-2">
+          <Joystick onMove={onJoyStickMove} />
+        </div>
       </div>
     </div>
   );

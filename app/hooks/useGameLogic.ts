@@ -49,6 +49,7 @@ export const useGameLogic = (
       }, 100);
       setTimeout(() => {
         clearInterval(blink);
+        setHideCharacter(false);
       }, 3000);
       escape(5000);
     }
@@ -119,6 +120,31 @@ export const useGameLogic = (
     ]
   );
 
+  const moveCharacterByJoyStic = useCallback(
+    (joyStickMove: { dx: number; dy: number }) => {
+      const speedMultiplier = characterFastSpeed; // 이동 속도 배율
+
+      // 속도 계산 및 캐릭터 이동
+      setCharacter((prev) => ({
+        x: Math.max(
+          0,
+          Math.min(
+            canvasSize - characterSize,
+            prev.x + joyStickMove.dx * speedMultiplier
+          )
+        ),
+        y: Math.max(
+          0,
+          Math.min(
+            canvasSize - characterSize,
+            prev.y + joyStickMove.dy * speedMultiplier
+          )
+        ),
+      }));
+    },
+    []
+  );
+
   return {
     character,
     escaped,
@@ -132,5 +158,7 @@ export const useGameLogic = (
     onDamage,
     onKeyDown,
     moveCharacter,
+    moveCharacterByJoyStic,
+    startNextLevel,
   };
 };
